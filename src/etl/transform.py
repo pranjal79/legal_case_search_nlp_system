@@ -54,11 +54,17 @@ def extract_legal_keywords(text: str) -> str:
     found = [kw for kw in LEGAL_KEYWORDS if kw in text_lower]
     return "; ".join(found)
 
+JOURNAL_ABBREVIATIONS = {"all", "cri", "air", "scc", "scr", "mad", "bom", "cal", "del"}
+
 def extract_judges(text: str) -> str:
     head = text[:500]
-    # crude heuristic: lines mentioning "J." or "CJ" near the top
     judge_lines = re.findall(r"([A-Z][A-Za-z\.\s]{2,40}?,?\s*J\.)", head)
-    return "; ".join(set(j.strip() for j in judge_lines)) if judge_lines else ""
+    filtered = []
+    for j in judge_lines:
+        first_word = j.strip().split(".")[0].strip().lower()
+        if first_word not in JOURNAL_ABBREVIATIONS and len(j.strip()) > 5:
+            filtered.append(j.strip())
+    return "; ".join(set(filtered))
 
 def run_transform():
     df = pd.read_csv(INPUT_PATH)
