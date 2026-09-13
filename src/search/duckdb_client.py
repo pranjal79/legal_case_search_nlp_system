@@ -1,18 +1,20 @@
 import duckdb
 from pathlib import Path
 
-DEPLOY_PARQUET_PATH = Path("data/processed/cases_deploy.parquet")
-FULL_PARQUET_PATH = Path("data/processed/cases_clean.parquet")
+# Anchor to the project root (two levels up from this file: src/search/ -> project root)
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
-# Use whichever file actually exists — deploy environments only have the slim one
+DEPLOY_PARQUET_PATH = PROJECT_ROOT / "data" / "processed" / "cases_deploy.parquet"
+FULL_PARQUET_PATH = PROJECT_ROOT / "data" / "processed" / "cases_clean.parquet"
+
 PARQUET_PATH = FULL_PARQUET_PATH if FULL_PARQUET_PATH.exists() else DEPLOY_PARQUET_PATH
 
 class DuckDBClient:
     def __init__(self, parquet_path: Path = PARQUET_PATH):
         if not parquet_path.exists():
             raise FileNotFoundError(
-                f"No parquet file found at {parquet_path}. "
-                f"Run export_parquet.py or export_deploy_parquet.py first."
+                f"No parquet file found at {parquet_path.resolve()}. "
+                f"Checked FULL={FULL_PARQUET_PATH.resolve()} and DEPLOY={DEPLOY_PARQUET_PATH.resolve()}."
             )
         self.con = duckdb.connect(database=":memory:")
         self.con.execute(f"""
