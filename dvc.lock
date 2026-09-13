@@ -1,0 +1,123 @@
+schema: '2.0'
+stages:
+  extract:
+    cmd: python -m src.etl.extract
+    deps:
+    - path: data/raw/supreme_court_pdfs
+      hash: md5
+      md5: 254a05def6e22b4667338508d851cdd7.dir
+      size: 6870170318
+      nfiles: 76
+    - path: src/etl/extract.py
+      hash: md5
+      md5: 069ec64f9eba53e05b3d7b16f92b41d4
+      size: 2975
+    outs:
+    - path: data/processed/cases_raw.csv
+      hash: md5
+      md5: caa7ccb922d62709bfb66930d1cb098a
+      size: 909264008
+  transform:
+    cmd: python -m src.etl.transform
+    deps:
+    - path: data/processed/cases_raw.csv
+      hash: md5
+      md5: caa7ccb922d62709bfb66930d1cb098a
+      size: 909264008
+    - path: src/etl/transform.py
+      hash: md5
+      md5: 1131c8afbb27ecc1a481765a84859d53
+      size: 3845
+    outs:
+    - path: data/processed/cases_clean.csv
+      hash: md5
+      md5: 796b35bc56d2b8ce19c9017c87aa2e01
+      size: 929840611
+  export_parquet:
+    cmd: python -m src.etl.export_parquet
+    deps:
+    - path: data/processed/cases_clean.csv
+      hash: md5
+      md5: 796b35bc56d2b8ce19c9017c87aa2e01
+      size: 929840611
+    - path: src/etl/export_parquet.py
+      hash: md5
+      md5: 69132c7f8868835b47f23667bf50c51b
+      size: 616
+    outs:
+    - path: data/processed/cases_clean.parquet
+      hash: md5
+      md5: 9c0809ef20551a0ad3ac395f5e07256b
+      size: 445987920
+  generate_embeddings:
+    cmd: python -m src.ml.generate_embeddings
+    deps:
+    - path: data/processed/cases_clean.parquet
+      hash: md5
+      md5: 9c0809ef20551a0ad3ac395f5e07256b
+      size: 445987920
+    - path: src/ml/generate_embeddings.py
+      hash: md5
+      md5: 2293e4eb9d2c8c0bf902afab9d1b8b09
+      size: 2794
+    outs:
+    - path: data/embeddings/case_ids.pkl
+      hash: md5
+      md5: 2b57faf5276d25cd350141ebf703e671
+      size: 373745
+    - path: data/embeddings/faiss_index.bin
+      hash: md5
+      md5: d3cc4a42ab9fb02f45ed7d990fec7294
+      size: 40992813
+  train_classifier:
+    cmd: python -m src.ml.train_classifier
+    deps:
+    - path: data/processed/cases_clean.parquet
+      hash: md5
+      md5: 9c0809ef20551a0ad3ac395f5e07256b
+      size: 445987920
+    - path: src/ml/train_classifier.py
+      hash: md5
+      md5: e5436803ad9b9ac07f81b8815941538b
+      size: 3444
+    outs:
+    - path: models/outcome_classifier.pkl
+      hash: md5
+      md5: fb4eda40598fcae6afd4f5168ebaa9df
+      size: 44469651
+    - path: models/tfidf_vectorizer.pkl
+      hash: md5
+      md5: f5d0e5de16d608642a08f4e9cd487223
+      size: 192709
+  build_graph:
+    cmd: python -m src.ml.citation_graph
+    deps:
+    - path: data/processed/cases_clean.parquet
+      hash: md5
+      md5: 9c0809ef20551a0ad3ac395f5e07256b
+      size: 445987920
+    - path: src/ml/citation_graph.py
+      hash: md5
+      md5: b398e90d2d036ea30933d3beca6c5529
+      size: 2822
+    outs:
+    - path: models/citation_graph.pkl
+      hash: md5
+      md5: 2bba2cd1b0697352ee3a52a4c30ce8ab
+      size: 13605833
+  judge_analysis:
+    cmd: python -m src.ml.judge_analysis
+    deps:
+    - path: data/processed/cases_clean.parquet
+      hash: md5
+      md5: 9c0809ef20551a0ad3ac395f5e07256b
+      size: 445987920
+    - path: src/ml/judge_analysis.py
+      hash: md5
+      md5: c9e5f58a70c56d4b72ceed7b4dc975fe
+      size: 1742
+    outs:
+    - path: models/judge_stats.json
+      hash: md5
+      md5: d42982a4046c67e92e1fc6b03820adfa
+      size: 57065

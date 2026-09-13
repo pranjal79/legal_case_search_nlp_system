@@ -1,0 +1,58 @@
+stages:
+  extract:
+    cmd: python -m src.etl.extract
+    deps:
+      - src/etl/extract.py
+      - data/raw/supreme_court_pdfs
+    outs:
+      - data/processed/cases_raw.csv
+
+  transform:
+    cmd: python -m src.etl.transform
+    deps:
+      - src/etl/transform.py
+      - data/processed/cases_raw.csv
+    outs:
+      - data/processed/cases_clean.csv
+
+  export_parquet:
+    cmd: python -m src.etl.export_parquet
+    deps:
+      - src/etl/export_parquet.py
+      - data/processed/cases_clean.csv
+    outs:
+      - data/processed/cases_clean.parquet
+
+  generate_embeddings:
+    cmd: python -m src.ml.generate_embeddings
+    deps:
+      - src/ml/generate_embeddings.py
+      - data/processed/cases_clean.parquet
+    outs:
+      - data/embeddings/faiss_index.bin
+      - data/embeddings/case_ids.pkl
+
+  train_classifier:
+    cmd: python -m src.ml.train_classifier
+    deps:
+      - src/ml/train_classifier.py
+      - data/processed/cases_clean.parquet
+    outs:
+      - models/outcome_classifier.pkl
+      - models/tfidf_vectorizer.pkl
+
+  build_graph:
+    cmd: python -m src.ml.citation_graph
+    deps:
+      - src/ml/citation_graph.py
+      - data/processed/cases_clean.parquet
+    outs:
+      - models/citation_graph.pkl
+
+  judge_analysis:
+    cmd: python -m src.ml.judge_analysis
+    deps:
+      - src/ml/judge_analysis.py
+      - data/processed/cases_clean.parquet
+    outs:
+      - models/judge_stats.json
