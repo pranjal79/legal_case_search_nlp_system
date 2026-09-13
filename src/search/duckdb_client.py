@@ -1,5 +1,10 @@
 import duckdb
 from pathlib import Path
+import os
+DEPLOY_PARQUET_PATH = Path("data/processed/cases_deploy.parquet")
+FULL_PARQUET_PATH = Path("data/processed/cases_clean.parquet")
+
+PARQUET_PATH = DEPLOY_PARQUET_PATH if os.getenv("STREAMLIT_DEPLOY") == "true" else FULL_PARQUET_PATH
 
 PARQUET_PATH = Path("data/processed/cases_clean.parquet")
 
