@@ -1,15 +1,19 @@
 import duckdb
 from pathlib import Path
-import os
+
 DEPLOY_PARQUET_PATH = Path("data/processed/cases_deploy.parquet")
 FULL_PARQUET_PATH = Path("data/processed/cases_clean.parquet")
 
-PARQUET_PATH = DEPLOY_PARQUET_PATH if os.getenv("STREAMLIT_DEPLOY") == "true" else FULL_PARQUET_PATH
-
-PARQUET_PATH = Path("data/processed/cases_clean.parquet")
+# Use whichever file actually exists — deploy environments only have the slim one
+PARQUET_PATH = FULL_PARQUET_PATH if FULL_PARQUET_PATH.exists() else DEPLOY_PARQUET_PATH
 
 class DuckDBClient:
     def __init__(self, parquet_path: Path = PARQUET_PATH):
+        if not parquet_path.exists():
+            raise FileNotFoundError(
+                f"No parquet file found at {parquet_path}. "
+                f"Run export_parquet.py or export_deploy_parquet.py first."
+            )
         self.con = duckdb.connect(database=":memory:")
         self.con.execute(f"""
             CREATE TABLE cases AS
